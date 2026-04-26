@@ -12,6 +12,7 @@ import { FeesModule } from './fees/fees.module';
 import { ClassesModule } from './classes/classes.module';
 import { ParentModule } from './parent/parent.module';
 import { SchoolModule } from './school/school.module';
+import { TeacherModule } from './teacher/teacher.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { SchoolModule } from './school/school.module';
     ClassesModule,
     ParentModule,
     SchoolModule,
+    TeacherModule,
   ],
   controllers: [AppController],
   providers: [AppService],

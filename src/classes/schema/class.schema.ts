@@ -6,7 +6,7 @@ export class ClassSubject {
   @Prop()
   subjectName!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @Prop({ type: Types.ObjectId, ref: 'Teacher' })
   teacherId!: Types.ObjectId;
 }
 
@@ -28,7 +28,7 @@ export class Class {
   @Prop()
   academicYear!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @Prop({ type: Types.ObjectId, ref: 'Teacher' })
   classTeacherId!: Types.ObjectId;
 
   @Prop()
