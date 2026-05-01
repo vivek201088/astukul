@@ -7,10 +7,21 @@ import { UserModule } from '../user/user.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Teacher, TeacherSchema } from '../teacher/schema/teacher.schema';
+import { Class, ClassSchema } from '../classes/schema/class.schema';
+import { Student, StudentSchema } from '../student/schema/student.schema';
+import { User, UserSchema } from 'src/user/schema/user.schema';
 
 @Module({
   imports: [
     UserModule,
+    MongooseModule.forFeature([
+      { name: Teacher.name, schema: TeacherSchema },
+      { name: Class.name, schema: ClassSchema },
+      { name: Student.name, schema: StudentSchema },
+      { name: User.name, schema: UserSchema },
+    ]),
     PassportModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({

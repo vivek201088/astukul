@@ -3,7 +3,7 @@ import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Class, ClassDocument } from './schema/class.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 @Injectable()
 export class ClassesService {
@@ -12,7 +12,22 @@ export class ClassesService {
   ) {}
 
   async create(createClassDto: CreateClassDto): Promise<Class> {
-    const createdClass = new this.classModel(createClassDto);
+    const {
+      schoolId,
+      classTeacherId,
+      subjects,
+      ...rest
+    } = createClassDto;
+
+    const createdClass = new this.classModel({
+      ...rest,
+      schoolId: new Types.ObjectId(schoolId),
+      classTeacherId: new Types.ObjectId(classTeacherId),
+      subjects: subjects?.map((subject) => ({
+        ...subject,
+        teacherId: new Types.ObjectId(subject.teacherId),
+      })) || [],
+    });
     return createdClass.save();
   }
 

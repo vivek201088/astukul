@@ -9,7 +9,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private userService: UserService,
     configService: ConfigService,
   ) {
-  super({
+    super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
         (request: any) =>
@@ -26,6 +26,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException();
     }
-    return user;
+    return {
+      userId: payload.sub,
+      role: payload.role,
+      schoolId: payload.schoolId
+    };
   }
 }

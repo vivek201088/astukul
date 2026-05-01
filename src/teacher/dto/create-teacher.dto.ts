@@ -14,6 +14,7 @@ import { TeacherStatus } from '../schema/teacher.schema';
 export class CreateTeacherDto {
   @IsString()
   @IsNotEmpty()
+  @IsMongoId()
   schoolId!: string;
 
   @IsMongoId()

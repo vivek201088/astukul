@@ -1,10 +1,14 @@
-import { IsEmail, IsNotEmpty, IsString, IsEnum, IsNumber } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsEnum, IsNumber, IsMongoId } from 'class-validator';
 import { UserRole } from '../../user/schema/user.schema';
 
 export class RegisterDto {
   @IsString()
+  @IsMongoId()
+  schoolId!: string;
+
+  @IsString()
   @IsNotEmpty()
-  name!: string;
+  fullName!: string;
 
   @IsEmail()
   email!: string;

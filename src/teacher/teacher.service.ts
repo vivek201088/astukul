@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Teacher, TeacherDocument } from './schema/teacher.schema';
 
 @Injectable()
@@ -12,7 +12,24 @@ export class TeacherService {
   ) {}
 
   async create(createTeacherDto: CreateTeacherDto): Promise<Teacher> {
-    const createdTeacher = new this.teacherModel(createTeacherDto);
+    const {
+      userId,
+      schoolId,
+      classTeacherOf,
+      createdBy,
+      ...rest
+    } = createTeacherDto;
+
+    const createdTeacher = new this.teacherModel({
+      ...rest,
+      userId: new Types.ObjectId(userId),
+      schoolId: new Types.ObjectId(schoolId),
+      createdBy: new Types.ObjectId(createdBy),
+      ...(classTeacherOf
+        ? { classTeacherOf: new Types.ObjectId(classTeacherOf) }
+        : {}),
+    });
+
     return createdTeacher.save();
   }
 

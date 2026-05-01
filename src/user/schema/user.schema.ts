@@ -1,6 +1,6 @@
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export enum UserRole {
   PARENT = 'parent',
@@ -12,8 +12,8 @@ export type UserDocument = HydratedDocument<User>;
 
 @Schema({ timestamps: true })
 export class User {
-  @Prop()
-  schoolId!: string;
+  @Prop({ type: Types.ObjectId, ref: 'School', required: true })
+  schoolId!: Types.ObjectId;
 
   @Prop()
   fullName!: string;
