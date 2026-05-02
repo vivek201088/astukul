@@ -6,6 +6,7 @@ export enum UserRole {
   PARENT = 'parent',
   TEACHER = 'teacher',
   ADMIN = 'admin',
+  SUPER_ADMIN = 'super_admin',
 }
 
 export type UserDocument = HydratedDocument<User>;
@@ -31,12 +32,6 @@ export class User {
   role!: UserRole;
 
   @Prop()
-  phone!: string;
-
-  @Prop()
-  profileImage!: string;
-
-  @Prop()
   gender!: string;
 
   @Prop()
@@ -48,8 +43,6 @@ export class User {
   @Prop({ default: true })
   isActive!: boolean;
 
-  @Prop()
-  lastLoginAt!: Date;
 }
 
 
