@@ -4,7 +4,7 @@ import { UpdateSchoolDto } from './dto/update-school.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { School, SchoolDocument } from './school/school.schema';
-import { Student, StudentDocument } from '../student/schema/student.schema';
+import { Student, StudentDocument, StudentStatus } from '../student/schema/student.schema';
 import { CreateAdmissionDto } from './dto/create-admission.dto';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class SchoolService {
   constructor(
     @InjectModel(School.name) private schoolModel: Model<SchoolDocument>,
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
-  ) {}
+  ) { }
 
   async create(createSchoolDto: CreateSchoolDto): Promise<School> {
     const createdSchool = new this.schoolModel(createSchoolDto);
@@ -34,7 +34,6 @@ export class SchoolService {
     return this.studentModel.create({
       ...createAdmissionDto,
       admissionNo,
-      status: 'active',
     });
   }
 
