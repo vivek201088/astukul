@@ -16,6 +16,9 @@ export class Teacher {
 
   @Prop({ type: [String], default: [] })
   subjects!: string[];
+
+  @Prop({ type: Types.ObjectId, ref: 'Class', default: null })
+  classTeacherOf?: Types.ObjectId | null;
 }
 
 export const TeacherSchema = SchemaFactory.createForClass(Teacher);

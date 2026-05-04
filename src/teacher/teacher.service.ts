@@ -1,10 +1,11 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { Teacher, TeacherDocument } from './schema/teacher.schema';
 import { User, UserDocument, UserRole } from '../user/schema/user.schema';
+import { Class, ClassDocument } from '../classes/schema/class.schema';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class TeacherService {
   constructor(
     @InjectModel(Teacher.name) private teacherModel: Model<TeacherDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Class.name) private classModel: Model<ClassDocument>,
   ) {}
 
   async create(createTeacherDto: CreateTeacherDto, authUser: any) {
@@ -50,18 +52,69 @@ export class TeacherService {
   }
 
   findAll() {
-    return `This action returns all teacher`;
+    return this.teacherModel.find().populate('userId', '-password').exec();
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} teacher`;
+    return this.teacherModel.findById(id).populate('userId', '-password').exec();
   }
 
   update(id: number, updateTeacherDto: UpdateTeacherDto) {
-    return `This action updates a #${id} teacher`;
+    return this.teacherModel.findByIdAndUpdate(id, updateTeacherDto, { new: true }).populate('userId', '-password').exec();
   }
 
   remove(id: number) {
-    return `This action removes a #${id} teacher`;
+    return this.teacherModel.findByIdAndDelete(id).populate('userId', '-password').exec();
+  }
+
+  async assignClassTeacher(teacherId: string, classId: string) {
+    const teacherObjectId = new Types.ObjectId(teacherId);
+    const classObjectId = new Types.ObjectId(classId);
+
+    const [teacher, classDoc] = await Promise.all([
+      this.teacherModel.findById(teacherObjectId).exec(),
+      this.classModel.findById(classObjectId).exec(),
+    ]);
+
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+
+    if (!classDoc) {
+      throw new NotFoundException('Class not found');
+    }
+
+    // If this class already has a class teacher, unassign that teacher first.
+    if (classDoc.classTeacherId) {
+      await this.teacherModel
+        .findByIdAndUpdate(classDoc.classTeacherId, { $set: { classTeacherOf: null } })
+        .exec();
+    }
+
+    // If this teacher was class teacher of another class, unassign them there.
+    if (teacher.classTeacherOf) {
+      await this.classModel
+        .findByIdAndUpdate(teacher.classTeacherOf, { $set: { classTeacherId: null } })
+        .exec();
+    }
+
+    const [updatedTeacher] = await Promise.all([
+      this.teacherModel
+        .findByIdAndUpdate(
+          teacherObjectId,
+          { $set: { classTeacherOf: classObjectId } },
+          { new: true },
+        )
+        .populate('userId', '-password')
+        .exec(),
+      this.classModel
+        .findByIdAndUpdate(classObjectId, { $set: { classTeacherId: teacherObjectId } }, { new: true })
+        .exec(),
+    ]);
+
+    return {
+      message: 'Teacher assigned as class teacher successfully',
+      teacher: updatedTeacher,
+    };
   }
 }

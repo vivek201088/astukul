@@ -3,8 +3,8 @@ import { HydratedDocument, Types } from 'mongoose';
 
 @Schema({ _id: false })
 export class ClassSubject {
-  @Prop({ type: Types.ObjectId, ref: 'School' })
-  schoolId!: Types.ObjectId;
+  @Prop()
+  subjectName!: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Teacher' })
   teacherId!: Types.ObjectId;

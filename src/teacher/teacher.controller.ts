@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards }
 import { TeacherService } from './teacher.service';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import { AssignClassTeacherDto } from './dto/assign-class-teacher.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -31,6 +32,13 @@ export class TeacherController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateTeacherDto: UpdateTeacherDto) {
     return this.teacherService.update(+id, updateTeacherDto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Patch(':id/assign-class-teacher')
+  assignClassTeacher(@Param('id') id: string, @Body() assignClassTeacherDto: AssignClassTeacherDto) {
+    return this.teacherService.assignClassTeacher(id, assignClassTeacherDto.classId);
   }
 
   @Delete(':id')

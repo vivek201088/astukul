@@ -19,8 +19,6 @@ class CreateClassSubjectDto {
 }
 
 export class CreateClassDto {
-  @IsMongoId()
-  schoolId!: string;
 
   @IsString()
   @IsNotEmpty()
