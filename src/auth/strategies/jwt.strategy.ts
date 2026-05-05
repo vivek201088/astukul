@@ -4,11 +4,23 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserService } from '../../user/user.service';
 import { ConfigService } from '@nestjs/config';
 
+export interface JwtPayload {
+  sub?: number | string; // User ID
+  email: string;
+  name: string;
+  iat?: number | string;
+  exp?: number | string;
+  role?: number | string;
+  schoolId?: number | string;
+}
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private userService: UserService,
-    configService: ConfigService,
-  ) {
+  constructor(private configService: ConfigService) {
+    const secret = configService.get<string>('JWT_SECRET');
+    if (!secret) {
+      throw new Error('JWT_SECRET is not configured');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -17,14 +29,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           request?.authentication ||
           request?.headers?.authentication,
       ]),
-      secretOrKey: configService.getOrThrow('JWT_SECRET'),
+      ignoreExpiration: false,
+      secretOrKey: secret,
     });
   }
 
-  async validate(payload: any) {
-    const user = await this.userService.findOne(payload.sub);
-    if (!user) {
-      throw new UnauthorizedException();
+
+  async validate(payload: JwtPayload) {
+    if (!payload.sub || !payload.email) {
+      throw new UnauthorizedException('Invalid token payload');
     }
     return {
       userId: payload.sub,

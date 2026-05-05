@@ -7,22 +7,26 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { User, UserDocument } from '../user/schema/user.schema';
 import { Model, Types } from 'mongoose';
+import { AuthResponseDto } from './dto/auth-response.dto';
+import { JwtPayload } from './strategies/jwt.strategy';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
+    private configService: ConfigService,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) { }
 
-  async register(registerDto: RegisterDto): Promise<{ accessToken: string; refreshToken: string }> {
+  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const { email, password, ...userData } = registerDto;
 
     // Check if user already exists
     const existingUser = await this.userService.findByEmail(email);
     if (existingUser) {
-      throw new ConflictException('User already exists');
+      throw new ConflictException('User with this email already exists');
     }
 
     // Hash password
@@ -35,35 +39,26 @@ export class AuthService {
       password: hashedPassword,
     }) as UserDocument;
 
-    // Generate tokens
-    const payload = { sub: user._id.toString(), role: user.role, schoolId: user.schoolId };
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
-    return { accessToken, refreshToken };
+    return this.generateTokens(user);
   }
 
-  async login(loginDto: LoginDto): Promise<{ accessToken: string; refreshToken: string }> {
+  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
-    // Find user
+    // Find user by email
     const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, (user as UserDocument).password);
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
     // Generate tokens
-    const payload = { email: user.email, sub: (user as UserDocument)._id.toString(), role: user.role, schoolId: user.schoolId };
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
-    return { accessToken, refreshToken };
+    return this.generateTokens(user);
   }
 
   async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
@@ -87,12 +82,15 @@ export class AuthService {
   async getProfile(user: any): Promise<any> {
     if (user.role === 'teacher') {
       console.log('Fetching profile for teacher with ID:', user);
+      const matchId = Types.ObjectId.isValid(user.userId)
+        ? new Types.ObjectId(user.userId)
+        : user.userId;
+
       return await this.userModel.aggregate(
         [
           {
-            //69eddbf77be3a50ddc7c0e21
             $match: {
-              _id: user._id
+              _id: matchId
             }
           },
           {
@@ -155,5 +153,38 @@ export class AuthService {
       data: user,
     };
 
+  }
+
+  private async generateTokens(user: any): Promise<AuthResponseDto> {
+    const payload: JwtPayload = {
+      sub: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      schoolId: user.schoolId,
+    };
+
+    // Generate access token
+    const accessToken = this.jwtService.sign(payload as any);
+
+    // Generate refresh token
+    const refreshToken = this.jwtService.sign(payload as any, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_EXPIRATION', '7d'),
+    } as any);
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: this.configService.get<string>('JWT_EXPIRATION', '7d'),
+      tokenType: 'Bearer',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        schoolId: user.schoolId,
+      },
+    };
   }
 }
