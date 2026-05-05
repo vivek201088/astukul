@@ -16,7 +16,7 @@ async function bootstrap() {
 
   // Global validation pipe with custom error formatting
   app.useGlobalPipes(new CustomValidationPipe({
-    whitelist: true,
+    whitelist: false,
     forbidNonWhitelisted: true,
     transform: true,
     transformOptions: {
@@ -30,12 +30,6 @@ async function bootstrap() {
     origin: 'http://localhost:3000',
     credentials: true, // optional (if using cookies/auth headers)
   });
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-    }),
-  );
 
   await app.listen(process.env.PORT ?? 3001);
 }
