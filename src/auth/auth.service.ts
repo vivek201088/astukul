@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
@@ -17,7 +17,7 @@ export class AuthService {
   ) { }
 
   async register(registerDto: RegisterDto): Promise<{ accessToken: string; refreshToken: string }> {
-    const { email, password,...userData } = registerDto;
+    const { email, password, ...userData } = registerDto;
 
     // Check if user already exists
     const existingUser = await this.userService.findByEmail(email);
@@ -86,7 +86,7 @@ export class AuthService {
 
   async getProfile(user: any): Promise<any> {
     if (user.role === 'teacher') {
-      console.log('Fetching profile for teacher with ID:', user._id);
+      console.log('Fetching profile for teacher with ID:', user);
       return await this.userModel.aggregate(
         [
           {
@@ -149,6 +149,11 @@ export class AuthService {
       )
     }
 
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Profile retrieved successfully',
+      data: user,
+    };
 
   }
 }
