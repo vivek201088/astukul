@@ -10,6 +10,7 @@ import { Model, Types } from 'mongoose';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
 import { ConfigService } from '@nestjs/config';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
@@ -61,19 +62,20 @@ export class AuthService {
     return this.generateTokens(user);
   }
 
-  async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
+  async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<AuthResponseDto> {
+    const { refreshToken } = refreshTokenDto;
     try {
-      const payload = this.jwtService.verify(refreshToken);
+      // Verify refresh token
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
+      // Get user from database
       const user = await this.userService.findOne(payload.sub);
-
       if (!user) {
-        throw new UnauthorizedException('Invalid refresh token');
+        throw new UnauthorizedException('User not found');
       }
-
-      const newPayload = { email: user.email, sub: (user as UserDocument)._id.toString(), role: user.role };
-      const accessToken = this.jwtService.sign(newPayload);
-
-      return { accessToken };
+      // Generate new tokens
+      return this.generateTokens(user);
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }

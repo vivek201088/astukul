@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Request, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request, HttpStatus, HttpCode } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -54,7 +54,18 @@ export class AuthController {
   }
 
   @Post('refresh-token')
-  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshToken(refreshTokenDto.refreshToken);
+  @HttpCode(HttpStatus.OK)
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto): Promise<{
+    statusCode: number;
+    message: string;
+    data: AuthResponseDto;
+  }> {
+    const result = await this.authService.refreshToken(refreshTokenDto);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Token refreshed successfully',
+      data: result,
+    };
   }
+
 }
